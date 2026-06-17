@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "okf-wiki"
+version = "0.1.0"
+description = "Local, OKF-compatible knowledge engine for AI agents: capture, retrieve, serve (MCP), visualize, export."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+keywords = ["mcp", "okf", "open-knowledge-format", "rag", "agents", "claude", "codex", "opencode", "knowledge-base"]
+authors = [{ name = "okf-wiki contributors" }]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+# Real neural embeddings (multilingual). Without this, a dependency-free numpy
+# hashing embedder is used as the default retriever.
+neural = ["sentence-transformers>=2.2"]
+# Robust YAML frontmatter parsing for the viewer/exporter (a stdlib fallback is
+# used when absent).
+yaml = ["pyyaml>=6.0"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+okf-wiki = "okf_wiki.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/heonyus/okf-wiki"
+Issues = "https://github.com/heonyus/okf-wiki/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+okf_wiki = ["_okf_viewer/*", "harness/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
