@@ -7,11 +7,11 @@ screenshot. It contains no personal data.
 Render it:
 
 ```bash
-okf-wiki viz --wiki examples/demo --out demo.html && open demo.html
+memvault viz --wiki examples/demo --out demo.html && open demo.html
 ```
 
 Export it to a conformant OKF v0.1 bundle:
 
 ```bash
-okf-wiki export --wiki examples/demo --out /tmp/acme-okf
+memvault export --wiki examples/demo --out /tmp/acme-okf
 ```

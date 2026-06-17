@@ -6,13 +6,13 @@ Code (UserPromptSubmit / SessionStart) feed whatever this script prints to stdou
 into the model's context. This is the deterministic "consult the wiki first"
 enforcement layer.
 
-- SessionStart (no prompt): inject a short orientation + the okf-wiki MCP tools.
+- SessionStart (no prompt): inject a short orientation + the memvault MCP tools.
 - UserPromptSubmit: for local/personal/project/harness-engineering prompts, run
-  `okf-wiki search` and inject the top results (keyword gate avoids spending
+  `memvault search` and inject the top results (keyword gate avoids spending
   tokens on unrelated prompts).
 - Never blocks, never errors out the harness loop.
 
-Paths resolve from $OKF_WIKI / $OKF_HOME, defaulting to ~/llm-wiki and ~.
+Paths resolve from $MEMVAULT_WIKI / $MEMVAULT_HOME, defaulting to ~/llm-wiki and ~.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-WIKI = Path(os.environ.get("OKF_WIKI") or (Path.home() / "llm-wiki")).expanduser()
+WIKI = Path(os.environ.get("MEMVAULT_WIKI") or (Path.home() / "llm-wiki")).expanduser()
 
 TRIGGERS = (
     "wiki", "local", "로컬", "내 ", "내가", "우리", "이전", "지난", "예전", "결정",
@@ -71,19 +71,19 @@ def event_kind(payload: dict) -> str:
 
 def orientation() -> str:
     return (
-        "[okf-wiki] The local OKF wiki is the durable knowledge base for this "
+        "[memvault] The local OKF wiki is the durable knowledge base for this "
         "machine (files, projects, research, and Codex/Claude/Gemini session "
         "history). For anything about local files, prior decisions, research, or "
-        "harness engineering, consult it first via the `okf-wiki` MCP tools "
+        "harness engineering, consult it first via the `memvault` MCP tools "
         "(`wiki_answer_context`, `wiki_search`, `wiki_semantic_search`) or "
-        "`okf-wiki search \"<query>\"`."
+        "`memvault search \"<query>\"`."
     )
 
 
 def deep_context(prompt: str) -> str:
     try:
         out = subprocess.run(
-            [sys.executable, "-m", "okf_wiki", "search", "--wiki", str(WIKI),
+            [sys.executable, "-m", "memvault", "search", "--wiki", str(WIKI),
              "--mode", "hybrid", "--limit", "5", prompt],
             capture_output=True, text=True, timeout=30,
         )
@@ -92,7 +92,7 @@ def deep_context(prompt: str) -> str:
         body = ""
     if not body:
         return orientation()
-    return "[okf-wiki] Wiki-first context (consult before answering):\n" + body
+    return "[memvault] Wiki-first context (consult before answering):\n" + body
 
 
 def main() -> int:

@@ -14,7 +14,7 @@ Tools
                         if the embedding index is absent)
 
 Resources
-- okf://wiki/<concept-id> : read any wiki page; index + system pages are listed
+- memvault://wiki/<concept-id> : read any wiki page; index + system pages are listed
 
 Transport: newline-delimited JSON-RPC 2.0 over stdio (the MCP stdio framing).
 Pure standard library, so it runs under the same interpreter as the rest of the
@@ -36,7 +36,7 @@ if str(TOOL_DIR) not in sys.path:
 import query_wiki  # type: ignore[import-not-found]  # noqa: E402
 
 PROTOCOL_VERSION = "2025-06-18"
-SERVER_INFO = {"name": "okf-wiki", "version": "0.1.0"}
+SERVER_INFO = {"name": "memvault", "version": "0.1.0"}
 DEFAULT_WIKI = Path("~/llm-wiki")
 DEFAULT_ROOT = Path("~")
 
@@ -235,19 +235,19 @@ def list_resources() -> list[dict]:
     out: list[dict] = []
     index = WIKI / "wiki" / "index.md"
     if index.exists():
-        out.append({"uri": "okf://wiki/index", "name": "Wiki Index", "mimeType": "text/markdown"})
+        out.append({"uri": "memvault://wiki/index", "name": "Wiki Index", "mimeType": "text/markdown"})
     sysdir = WIKI / "wiki" / "system"
     if sysdir.exists():
         for page in sorted(sysdir.glob("*.md")):
             cid = page.relative_to(WIKI / "wiki").with_suffix("").as_posix()
-            out.append({"uri": f"okf://wiki/{cid}", "name": cid, "mimeType": "text/markdown"})
+            out.append({"uri": f"memvault://wiki/{cid}", "name": cid, "mimeType": "text/markdown"})
     return out
 
 
 def read_resource(uri: str) -> dict:
-    if not uri.startswith("okf://wiki/"):
+    if not uri.startswith("memvault://wiki/"):
         raise ValueError(f"unsupported uri scheme: {uri}")
-    rel = uri[len("okf://wiki/"):]
+    rel = uri[len("memvault://wiki/"):]
     candidate = (WIKI / "wiki" / rel)
     for path in (candidate, candidate.with_suffix(".md"), Path(str(candidate) + ".md")):
         try:
@@ -314,7 +314,7 @@ def dispatch(msg: dict) -> dict | None:
         return _result(req_id, {"prompts": []})
     if method == "resources/templates/list":
         return _result(req_id, {"resourceTemplates": [
-            {"uriTemplate": "okf://wiki/{path}", "name": "Wiki page", "mimeType": "text/markdown"}
+            {"uriTemplate": "memvault://wiki/{path}", "name": "Wiki page", "mimeType": "text/markdown"}
         ]})
 
     if req_id is not None:
@@ -352,7 +352,7 @@ def selftest() -> int:
         {"jsonrpc": "2.0", "id": 4, "method": "tools/call",
          "params": {"name": "wiki_semantic_search", "arguments": {"query": "tikfinity backend worker", "limit": 3}}},
         {"jsonrpc": "2.0", "id": 5, "method": "resources/list"},
-        {"jsonrpc": "2.0", "id": 6, "method": "resources/read", "params": {"uri": "okf://wiki/index"}},
+        {"jsonrpc": "2.0", "id": 6, "method": "resources/read", "params": {"uri": "memvault://wiki/index"}},
     ]
     for s in samples:
         r = dispatch(s)

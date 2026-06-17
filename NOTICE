@@ -1,18 +1,18 @@
-okf-wiki
-Copyright 2026 okf-wiki contributors
+memvault
+Copyright 2026 memvault contributors
 
 Licensed under the Apache License, Version 2.0 (the "License"); see LICENSE.
 
 This product bundles components from the Open Knowledge Format (OKF) reference
 implementation:
 
-  - src/okf_wiki/_okf_viewer/{viz.html,viz.css,viz.js}
+  - src/memvault/_okf_viewer/{viz.html,viz.css,viz.js}
     Source: https://github.com/GoogleCloudPlatform/knowledge-catalog
             (okf/src/enrichment_agent/viewer/)
     Copyright: Google LLC
     License: Apache License 2.0
 
-These viewer assets are used unmodified. okf-wiki is an independent project and is
+These viewer assets are used unmodified. memvault is an independent project and is
 not affiliated with or endorsed by Google. "Open Knowledge Format" and "OKF"
-refer to the open specification published by Google Cloud; okf-wiki produces and
+refer to the open specification published by Google Cloud; memvault produces and
 consumes OKF v0.1 bundles but is a separate implementation.

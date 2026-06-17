@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Install the okf-wiki integration into every detected agent harness.
+"""Install the memvault integration into every detected agent harness.
 
 This is the oh-my-* style distributor: it wires the one portable MCP engine
-(``tools/okf_wiki_mcp.py``) plus wiki-first routing/enforcement into each harness
+(``tools/mcp_server.py``) plus wiki-first routing/enforcement into each harness
 using that harness's own extension points, idempotently and with backups.
 
 Per harness:
-- OpenCode  : drop ``plugin/llm-wiki.js`` (registers the okf-wiki MCP; coexists
+- OpenCode  : drop ``plugin/llm-wiki.js`` (registers the memvault MCP; coexists
               with omo). Reversible by deleting the file.
-- Codex     : append ``[mcp_servers.okf-wiki]`` to ``~/.codex/config.toml``.
-- Claude    : add ``okf-wiki`` to ``~/.claude.json`` mcpServers and wire
+- Codex     : append ``[mcp_servers.memvault]`` to ``~/.codex/config.toml``.
+- Claude    : add ``memvault`` to ``~/.claude.json`` mcpServers and wire
               SessionStart + UserPromptSubmit hooks in ``~/.claude/settings.json``
               to ``harness/hooks/wiki_inject.py`` (deterministic wiki-first).
 - All       : append the AGENTS.md routing block to ``~/AGENTS.md`` and
@@ -30,7 +30,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import okf_wiki.config as _config
+import memvault.config as _config
 
 HOME = Path.home()
 WIKI = _config.wiki_root()
@@ -38,9 +38,9 @@ PKG = Path(__file__).resolve().parent          # source templates ship inside th
 HARNESS = PKG / "harness"
 HOOK = HARNESS / "hooks" / "wiki_inject.py"
 PY = sys.executable or "python3"
-MCP_CMD = [PY, str(PKG / "okf_wiki_mcp.py"), "--wiki", str(WIKI)]
-MARK_BEGIN = "<!-- okf-wiki:begin -->"
-MARK_END = "<!-- okf-wiki:end -->"
+MCP_CMD = [PY, str(PKG / "mcp_server.py"), "--wiki", str(WIKI)]
+MARK_BEGIN = "<!-- memvault:begin -->"
+MARK_END = "<!-- memvault:end -->"
 
 
 def stamp() -> str:
@@ -71,14 +71,14 @@ def opencode_status() -> tuple[bool, str]:
 def _opencode_plugin_js() -> str:
     cmd = ", ".join(json.dumps(a) for a in MCP_CMD)
     return (
-        "// okf-wiki — OpenCode plugin (generated). Registers the okf-wiki MCP\n"
+        "// memvault — OpenCode plugin (generated). Registers the memvault MCP\n"
         "// server so every session gets wiki_answer_context / wiki_search /\n"
         "// wiki_semantic_search. Coexists with omo; delete this file to remove.\n"
         "export const OkfWiki = async () => ({\n"
         "  config: async (config) => {\n"
         "    try {\n"
         "      config.mcp = config.mcp || {};\n"
-        f"      if (!config.mcp[\"okf-wiki\"]) config.mcp[\"okf-wiki\"] = {{ type: \"local\", command: [{cmd}], enabled: true }};\n"
+        f"      if (!config.mcp[\"memvault\"]) config.mcp[\"memvault\"] = {{ type: \"local\", command: [{cmd}], enabled: true }};\n"
         "    } catch (_e) {}\n"
         "  },\n"
         "});\n"
@@ -117,7 +117,7 @@ def opencode_uninstall(dry: bool) -> str:
 def codex_block() -> str:
     args = ", ".join(json.dumps(a) for a in MCP_CMD[1:])
     return (
-        "\n[mcp_servers.okf-wiki]\n"
+        "\n[mcp_servers.memvault]\n"
         f"command = {json.dumps(MCP_CMD[0])}\n"
         f"args = [{args}]\n"
         "startup_timeout_sec = 30\n"
@@ -128,8 +128,8 @@ def codex_status() -> tuple[bool, str]:
     cfg = HOME / ".codex" / "config.toml"
     if not cfg.exists():
         return False, "codex not detected"
-    present = "[mcp_servers.okf-wiki]" in cfg.read_text(encoding="utf-8")
-    return present, f"mcp_servers.okf-wiki {'present' if present else 'absent'}"
+    present = "[mcp_servers.memvault]" in cfg.read_text(encoding="utf-8")
+    return present, f"mcp_servers.memvault {'present' if present else 'absent'}"
 
 
 def codex_install(dry: bool) -> str:
@@ -137,34 +137,34 @@ def codex_install(dry: bool) -> str:
     if not cfg.exists():
         return "skip: codex not detected"
     text = cfg.read_text(encoding="utf-8")
-    if "[mcp_servers.okf-wiki]" in text:
+    if "[mcp_servers.memvault]" in text:
         return "codex mcp already registered"
     if dry:
-        return f"would append [mcp_servers.okf-wiki] to {cfg}"
+        return f"would append [mcp_servers.memvault] to {cfg}"
     backup(cfg)
     cfg.write_text(text.rstrip() + "\n" + codex_block(), encoding="utf-8")
-    return f"registered codex mcp_servers.okf-wiki in {cfg}"
+    return f"registered codex mcp_servers.memvault in {cfg}"
 
 
 def codex_uninstall(dry: bool) -> str:
     cfg = HOME / ".codex" / "config.toml"
-    if not cfg.exists() or "[mcp_servers.okf-wiki]" not in cfg.read_text(encoding="utf-8"):
+    if not cfg.exists() or "[mcp_servers.memvault]" not in cfg.read_text(encoding="utf-8"):
         return "codex mcp not present"
     if dry:
-        return f"would remove [mcp_servers.okf-wiki] from {cfg}"
+        return f"would remove [mcp_servers.memvault] from {cfg}"
     lines = cfg.read_text(encoding="utf-8").splitlines()
     out, skip = [], False
     for ln in lines:
-        if ln.strip() == "[mcp_servers.okf-wiki]":
+        if ln.strip() == "[mcp_servers.memvault]":
             skip = True
             continue
-        if skip and ln.startswith("[") and ln.strip() != "[mcp_servers.okf-wiki]":
+        if skip and ln.startswith("[") and ln.strip() != "[mcp_servers.memvault]":
             skip = False
         if not skip:
             out.append(ln)
     backup(cfg)
     cfg.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
-    return f"removed codex mcp_servers.okf-wiki from {cfg}"
+    return f"removed codex mcp_servers.memvault from {cfg}"
 
 
 # --------------------------------------------------------------------------- #
@@ -184,14 +184,14 @@ def claude_status() -> tuple[bool, str]:
     settings = HOME / ".claude" / "settings.json"
     if not (HOME / ".claude").exists():
         return False, "claude not detected"
-    mcp = "okf-wiki" in (_load_json(cj).get("mcpServers") or {}) if cj.exists() else False
+    mcp = "memvault" in (_load_json(cj).get("mcpServers") or {}) if cj.exists() else False
     hooks = _load_json(settings).get("hooks") or {}
     hooked = any("wiki_inject" in json.dumps(hooks.get(ev, [])) for ev in ("SessionStart", "UserPromptSubmit"))
     return (mcp and hooked), f"mcp={'yes' if mcp else 'no'} hooks={'yes' if hooked else 'no'}"
 
 
 def _claude_hook_entry() -> dict:
-    cmd = f'OKF_WIKI={json.dumps(str(WIKI))} {json.dumps(PY)[1:-1]} {HOOK}'
+    cmd = f'MEMVAULT_WIKI={json.dumps(str(WIKI))} {json.dumps(PY)[1:-1]} {HOOK}'
     return {"hooks": [{"type": "command", "command": cmd}]}
 
 
@@ -205,18 +205,18 @@ def claude_install(dry: bool) -> str:
     if cj.exists():
         data = _load_json(cj)
         servers = data.setdefault("mcpServers", {}) if not dry else (data.get("mcpServers") or {})
-        if "okf-wiki" in (data.get("mcpServers") or {}):
+        if "memvault" in (data.get("mcpServers") or {}):
             msgs.append("claude mcp already registered")
         elif dry:
-            msgs.append("would add okf-wiki to ~/.claude.json mcpServers")
+            msgs.append("would add memvault to ~/.claude.json mcpServers")
         else:
             backup(cj)
-            servers["okf-wiki"] = {"command": MCP_CMD[0], "args": MCP_CMD[1:]}
+            servers["memvault"] = {"command": MCP_CMD[0], "args": MCP_CMD[1:]}
             data["mcpServers"] = servers
             cj.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-            msgs.append("registered claude mcp okf-wiki")
+            msgs.append("registered claude mcp memvault")
     else:
-        msgs.append("note: ~/.claude.json absent; run `claude mcp add -s user okf-wiki -- " + " ".join(MCP_CMD) + "`")
+        msgs.append("note: ~/.claude.json absent; run `claude mcp add -s user memvault -- " + " ".join(MCP_CMD) + "`")
     # Hooks into settings.json
     settings = cdir / "settings.json"
     data = _load_json(settings)
@@ -249,14 +249,14 @@ def claude_uninstall(dry: bool) -> str:
     cj = HOME / ".claude.json"
     if cj.exists():
         data = _load_json(cj)
-        if "okf-wiki" in (data.get("mcpServers") or {}):
+        if "memvault" in (data.get("mcpServers") or {}):
             if dry:
-                msgs.append("would remove claude mcp okf-wiki")
+                msgs.append("would remove claude mcp memvault")
             else:
                 backup(cj)
-                data["mcpServers"].pop("okf-wiki", None)
+                data["mcpServers"].pop("memvault", None)
                 cj.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-                msgs.append("removed claude mcp okf-wiki")
+                msgs.append("removed claude mcp memvault")
     settings = cdir / "settings.json"
     data = _load_json(settings)
     hooks = data.get("hooks") or {}
@@ -284,13 +284,13 @@ def claude_uninstall(dry: bool) -> str:
 def routing_snippet() -> str:
     return (
         f"{MARK_BEGIN}\n"
-        "## Local OKF wiki — required orientation (okf-wiki)\n\n"
+        "## Local OKF wiki — required orientation (memvault)\n\n"
         "Before answering anything about the user's local files, projects, research, "
         "prior decisions, agent sessions, or harness engineering, consult the local "
         f"OKF wiki at `{WIKI}` **first**.\n\n"
-        "- Prefer the `okf-wiki` MCP tools: `wiki_answer_context` (call first), "
+        "- Prefer the `memvault` MCP tools: `wiki_answer_context` (call first), "
         "`wiki_search`, `wiki_semantic_search`.\n"
-        f"- CLI fallback: `okf-wiki search --wiki {WIKI} \"<query>\"`.\n"
+        f"- CLI fallback: `memvault search --wiki {WIKI} \"<query>\"`.\n"
         "- Label local claims as wiki-backed, file-backed, or inferred. If the wiki "
         "has no coverage, say so, then inspect the needed local files.\n"
         f"{MARK_END}\n"
@@ -343,7 +343,7 @@ def run(mode: str) -> int:
             actions.append(f"[{'OK' if ok else '..'}] {name}: {detail}")
         for p in (HOME / "AGENTS.md", HOME / "CLAUDE.md"):
             actions.append(f"[{'OK' if routing_status(p) else '..'}] routing {p.name}")
-        print("# okf-wiki harness wiring")
+        print("# memvault harness wiring")
         for a in actions:
             print(a)
         return 0
@@ -361,7 +361,7 @@ def run(mode: str) -> int:
         actions.append(routing_install(HOME / "AGENTS.md", dry))
         actions.append(routing_install(HOME / "CLAUDE.md", dry))
 
-    header = {"dry-run": "# okf-wiki install (DRY RUN)", "install": "# okf-wiki install", "uninstall": "# okf-wiki uninstall"}[mode]
+    header = {"dry-run": "# memvault install (DRY RUN)", "install": "# memvault install", "uninstall": "# memvault uninstall"}[mode]
     print(header)
     for a in actions:
         print(f"- {a}")

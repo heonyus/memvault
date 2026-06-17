@@ -22,7 +22,7 @@ jobs:
         run: pytest -q
       - name: CLI smoke
         run: |
-          okf-wiki --version
-          okf-wiki viz --wiki examples/demo --out /tmp/demo.html
-          okf-wiki export --wiki examples/demo --out /tmp/bundle
-          okf-wiki serve --selftest
+          memvault --version
+          memvault viz --wiki examples/demo --out /tmp/demo.html
+          memvault export --wiki examples/demo --out /tmp/bundle
+          memvault serve --selftest

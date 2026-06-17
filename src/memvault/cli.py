@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""okf-wiki unified CLI.
+"""memvault unified CLI.
 
 Subcommands dispatch to the engine modules. Each module also remains runnable on
-its own (``python -m okf_wiki.<module>``); this wrapper gives one clean surface:
+its own (``python -m memvault.<module>``); this wrapper gives one clean surface:
 
-    okf-wiki serve     # run the MCP server (stdio) for any harness
-    okf-wiki search    # hybrid semantic + keyword retrieval
-    okf-wiki keyword   # keyword-only search
-    okf-wiki index     # (re)build the semantic embedding index
-    okf-wiki ingest    # capture Codex / Claude / Gemini sessions
-    okf-wiki viz       # render the interactive knowledge graph (viz.html)
-    okf-wiki export    # export the wiki to a portable OKF bundle
-    okf-wiki install   # wire okf-wiki into detected agent harnesses
+    memvault serve     # run the MCP server (stdio) for any harness
+    memvault search    # hybrid semantic + keyword retrieval
+    memvault keyword   # keyword-only search
+    memvault index     # (re)build the semantic embedding index
+    memvault ingest    # capture Codex / Claude / Gemini sessions
+    memvault viz       # render the interactive knowledge graph (viz.html)
+    memvault export    # export the wiki to a portable OKF bundle
+    memvault install   # wire memvault into detected agent harnesses
 """
 
 from __future__ import annotations
@@ -20,19 +20,19 @@ import importlib
 import sys
 
 SUBCOMMANDS = {
-    "serve": "okf_wiki.okf_wiki_mcp",
-    "search": "okf_wiki.wiki_semantic_query",
-    "keyword": "okf_wiki.query_wiki",
-    "index": "okf_wiki.wiki_semantic_index",
-    "ingest": "okf_wiki.sessions",
-    "viz": "okf_wiki.wiki_viz",
-    "export": "okf_wiki.export_okf",
-    "install": "okf_wiki.install_harness",
+    "serve": "memvault.mcp_server",
+    "search": "memvault.wiki_semantic_query",
+    "keyword": "memvault.query_wiki",
+    "index": "memvault.wiki_semantic_index",
+    "ingest": "memvault.sessions",
+    "viz": "memvault.wiki_viz",
+    "export": "memvault.export_okf",
+    "install": "memvault.install_harness",
 }
 
 
 def _usage() -> str:
-    lines = ["okf-wiki <command> [options]", "", "commands:"]
+    lines = ["memvault <command> [options]", "", "commands:"]
     width = max(len(c) for c in SUBCOMMANDS)
     helps = {
         "serve": "run the MCP server (stdio) for any harness",
@@ -42,13 +42,13 @@ def _usage() -> str:
         "ingest": "capture Codex / Claude / Gemini sessions",
         "viz": "render the interactive knowledge graph (viz.html)",
         "export": "export the wiki to a portable OKF bundle",
-        "install": "wire okf-wiki into detected agent harnesses",
+        "install": "wire memvault into detected agent harnesses",
     }
     for cmd in SUBCOMMANDS:
         lines.append(f"  {cmd.ljust(width)}  {helps.get(cmd, '')}")
     lines.append("")
-    lines.append("Run `okf-wiki <command> --help` for command options.")
-    lines.append("Paths resolve from --wiki/--home, then $OKF_WIKI/$OKF_HOME, then ~/llm-wiki and ~.")
+    lines.append("Run `memvault <command> --help` for command options.")
+    lines.append("Paths resolve from --wiki/--home, then $MEMVAULT_WIKI/$MEMVAULT_HOME, then ~/llm-wiki and ~.")
     return "\n".join(lines)
 
 
@@ -58,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
         print(_usage())
         return 0
     if argv[0] in ("-V", "--version"):
-        from okf_wiki import __version__
+        from memvault import __version__
         print(__version__)
         return 0
     cmd, rest = argv[0], argv[1:]
@@ -68,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
         print(_usage(), file=sys.stderr)
         return 2
     module = importlib.import_module(module_name)
-    sys.argv = [f"okf-wiki {cmd}", *rest]
+    sys.argv = [f"memvault {cmd}", *rest]
     return int(module.main() or 0)
 
 

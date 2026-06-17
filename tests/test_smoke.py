@@ -1,14 +1,14 @@
-"""Smoke tests for the okf-wiki engine, run against the public demo bundle."""
+"""Smoke tests for the memvault engine, run against the public demo bundle."""
 
 from pathlib import Path
 
 import numpy as np
 
-import okf_wiki.wiki_embed as emb
-import okf_wiki.export_okf as exp
-import okf_wiki.wiki_viz as viz
-import okf_wiki.okf_wiki_mcp as mcp
-import okf_wiki.query_wiki as qw
+import memvault.wiki_embed as emb
+import memvault.export_okf as exp
+import memvault.wiki_viz as viz
+import memvault.mcp_server as mcp
+import memvault.query_wiki as qw
 
 DEMO = Path(__file__).resolve().parent.parent / "examples" / "demo"
 
@@ -49,7 +49,7 @@ def test_keyword_search_finds_concept():
 def test_mcp_protocol_handshake_and_tools():
     mcp.WIKI = DEMO
     init = mcp.dispatch({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-    assert init["result"]["serverInfo"]["name"] == "okf-wiki"
+    assert init["result"]["serverInfo"]["name"] == "memvault"
     tl = mcp.dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     names = {t["name"] for t in tl["result"]["tools"]}
     assert {"wiki_answer_context", "wiki_search", "wiki_semantic_search"} <= names
